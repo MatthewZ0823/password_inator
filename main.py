@@ -1,8 +1,11 @@
-import json
-from typing import Annotated, Optional
+from typing_extensions import Annotated
+import pyperclip
 import typer
 from rich.console import Console
-from account import Account, account_from_json
+from account import save_account_to_file, create_account
+
+from prompter import ask_yes_no
+from password_utils import generate_password
 
 console = Console()
 err_console = Console(stderr=True)
@@ -10,70 +13,24 @@ err_console = Console(stderr=True)
 app = typer.Typer()
 
 
-def load_accounts() -> list[Account]:
-    try:
-        with open("accounts.json", "r") as file:
-            data = json.load(file)
-
-        accounts = []
-        for account in data:
-            account = account_from_json(account)
-            accounts.append(account)
-        return accounts
-    except FileNotFoundError:
-        with open("accounts.json", "w") as file:
-            file.write("[]")
-        return []
-    except json.JSONDecodeError as e:
-        # TODO handle this error better
-        err_console.print(f"[red bold]JSON decoding error:[/red bold] {e}")
-        raise typer.Exit(code=1)
-
-
-def my_callback(value: str):
-    if value == "":
-        return ":P"
-    return value
-
-
 @app.command()
-def new_account(
-    username: Optional[str] = typer.Option(
-        help="Username to associate with password", default=None),
-    service: Optional[str] = typer.Option(
-        help="Service to associate with password", default=None),
-    url: Optional[str] = typer.Option(
-        help="Url to associate with password", default=None),
-):
+def new_password(clipboard: Annotated[bool, typer.Option(
+        "--clipboard", "-c", help="Copy password to clipboard", is_flag=True)]):
     """
-    Create a new account to save credentials for
+    Generate a new password
     """
-    accounts = load_accounts()
+    password = generate_password()
 
-    if username == None:
-        if typer.prompt("Enter username? (Y/n)", default="n") == "Y":
-            username = typer.prompt(
-                "Enter username", default=None)
+    if clipboard:
+        pyperclip.copy(password)
+        console.print("[green]Password copied to clipboard![/green]")
+    else:
+        console.print(f"Password: {password}")
 
-    if service == None:
-        if typer.prompt("Enter service? (Y/n)", default="n") == "Y":
-            service = typer.prompt(
-                "Enter name of service", default=None)
-
-    if url == None:
-        if typer.prompt("Enter url? (Y/n)", default="n") == "Y":
-            url = typer.prompt(
-                "Enter name of url", default=None)
-
-    password = typer.prompt(
-        "Enter password", hide_input=True, confirmation_prompt=True)
-
-    accounts.append(Account(password, username, service, url))
-
-    with open("accounts.json", "w") as file:
-        accounts = list(map(lambda account: account.__dict__, accounts))
-        json.dump(accounts, file, indent=4)
-        console.print("[green]Account saved![/green]")
+    if ask_yes_no("Save password?"):
+        new_account = create_account(password=password)
+        save_account_to_file("accounts.json", new_account)
+        console.print("[green]Password saved![/green]")
 
 
 if __name__ == "__main__":
