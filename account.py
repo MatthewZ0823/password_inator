@@ -4,7 +4,9 @@ from typing import Optional
 import typer
 from password_utils import generate_password
 from prompter import ask_yes_no
+from rich.table import Table
 
+_empty_text = "[bright_magenta]Empty[/bright_magenta]"
 
 class Account:
     def __init__(self, password, username, service, url):
@@ -12,6 +14,29 @@ class Account:
         self.username = username
         self.service = service
         self.url = url
+
+    def _check_empty(self, val):
+        if val == None:
+            return _empty_text
+        return val
+
+    def get_table(self, display_password: bool = False):
+        table = Table(title="Account")
+        table.add_column("Field")
+        table.add_column("Value")
+
+        if display_password:
+            table.add_row("Password", self._check_empty(self.password))
+        elif self.password != None:
+            table.add_row("Password", "[bright_magenta]******[/bright_magenta]")
+        else:
+            table.add_row("Password", _empty_text)
+
+        table.add_row("Username", self._check_empty(self.username))
+        table.add_row("Service", self._check_empty(self.service))
+        table.add_row("URL", self._check_empty(self.url))
+
+        return table
 
 
 def account_from_json(data):

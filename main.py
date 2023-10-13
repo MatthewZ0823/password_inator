@@ -30,7 +30,8 @@ def new_password(clipboard: Annotated[bool, typer.Option(
     if ask_yes_no("Save password?"):
         new_account = create_account(password=password)
         save_account_to_file("accounts.json", new_account)
-        console.print("[green]Password saved![/green]")
+        console.print("[green]Account saved![/green]")
+        console.print(new_account.get_table())
 
 
 if __name__ == "__main__":
