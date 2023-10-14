@@ -6,7 +6,8 @@ from password_utils import generate_password
 from prompter import ask_yes_no
 from rich.table import Table
 
-_empty_text = "[bright_magenta]Empty[/bright_magenta]"
+EMPTY_TEXT = "[bright_black]Empty[/bright_black]"
+
 
 class Account:
     def __init__(self, password, username, service, url):
@@ -17,7 +18,7 @@ class Account:
 
     def _check_empty(self, val):
         if val == None:
-            return _empty_text
+            return EMPTY_TEXT
         return val
 
     def get_table(self, display_password: bool = False):
@@ -28,9 +29,10 @@ class Account:
         if display_password:
             table.add_row("Password", self._check_empty(self.password))
         elif self.password != None:
-            table.add_row("Password", "[bright_magenta]******[/bright_magenta]")
+            table.add_row(
+                "Password", "[bright_magenta]******[/bright_magenta]")
         else:
-            table.add_row("Password", _empty_text)
+            table.add_row("Password", EMPTY_TEXT)
 
         table.add_row("Username", self._check_empty(self.username))
         table.add_row("Service", self._check_empty(self.service))
@@ -57,6 +59,7 @@ def load_accounts_from_file(path: str) -> list[Account]:
         with open("accounts.json", "w") as file:
             file.write("[]")
         return []
+
 
 def create_account(
     username: Optional[str] = None,
@@ -91,6 +94,7 @@ def create_account(
 
     return Account(password, username, service, url)
 
+
 def save_account_to_file(path: str, account: Account) -> None:
     """
     Append the given account to the json file given by path
@@ -101,5 +105,6 @@ def save_account_to_file(path: str, account: Account) -> None:
 
     with open(path, "w") as file:
         # Convert the accounts to a list of dicts so it's json serializable
-        serialized_accounts = list(map(lambda account: account.__dict__, accounts))
+        serialized_accounts = list(
+            map(lambda account: account.__dict__, accounts))
         json.dump(serialized_accounts, file, indent=4)
