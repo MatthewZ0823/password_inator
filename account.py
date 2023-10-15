@@ -1,9 +1,8 @@
 import json
 from typing import Optional
 
-import typer
 from password_utils import generate_password
-from prompter import ask_yes_no
+# from prompter import ask_yes_no
 from rich.table import Table
 
 EMPTY_TEXT = "[bright_black]Empty[/bright_black]"
@@ -61,38 +60,38 @@ def load_accounts_from_file(path: str) -> list[Account]:
         return []
 
 
-def create_account(
-    username: Optional[str] = None,
-    service: Optional[str] = None,
-    url: Optional[str] = None,
-    password: Optional[str] = None,
-) -> Account:
-    """
-    Create a new account, prompts the user for input if any of the fields are missing
-    """
-    if username == None:
-        if ask_yes_no("Enter username?"):
-            username = typer.prompt(
-                "Enter username", default=None)
+# def create_account(
+#     username: Optional[str] = None,
+#     service: Optional[str] = None,
+#     url: Optional[str] = None,
+#     password: Optional[str] = None,
+# ) -> Account:
+#     """
+#     Create a new account, prompts the user for input if any of the fields are missing
+#     """
+#     if username == None:
+#         if ask_yes_no("Enter username?"):
+#             username = typer.prompt(
+#                 "Enter username", default=None)
 
-    if service == None:
-        if ask_yes_no("Enter name of service?"):
-            service = typer.prompt(
-                "Enter name of service", default=None)
+#     if service == None:
+#         if ask_yes_no("Enter name of service?"):
+#             service = typer.prompt(
+#                 "Enter name of service", default=None)
 
-    if url == None:
-        if ask_yes_no("Enter url?"):
-            url = typer.prompt(
-                "Enter name of url", default=None)
+#     if url == None:
+#         if ask_yes_no("Enter url?"):
+#             url = typer.prompt(
+#                 "Enter name of url", default=None)
 
-    if password == None:
-        if ask_yes_no("Generate password?"):
-            password = generate_password()
-        else:
-            password = typer.prompt(
-                "Enter password manually", hide_input=True, confirmation_prompt=True)
+#     if password == None:
+#         if ask_yes_no("Generate password?"):
+#             password = generate_password()
+#         else:
+#             password = typer.prompt(
+#                 "Enter password manually", hide_input=True, confirmation_prompt=True)
 
-    return Account(password, username, service, url)
+#     return Account(password, username, service, url)
 
 
 def save_account_to_file(path: str, account: Account) -> None:

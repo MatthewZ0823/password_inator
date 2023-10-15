@@ -1,16 +1,13 @@
-from typing_extensions import Annotated
+import click
 import pyperclip
-import typer
 from rich.console import Console, Group
 from rich.live import Live
-from rich.columns import Columns
 from rich.table import Table
-from rich.panel import Panel
-from account import EMPTY_TEXT, load_accounts_from_file, save_account_to_file, create_account
+from account import EMPTY_TEXT, Account, load_accounts_from_file, save_account_to_file
 from fuzzyfinder import fuzzyfinder
 from getch import getch
 
-from prompter import ask_yes_no
+# from prompter import ask_yes_no
 from password_utils import generate_password
 
 BACKSPACE_BYTE = b'\x08'
@@ -19,12 +16,15 @@ FUNCTION_ARROW_BYTE = b'\xe0'
 console = Console()
 err_console = Console(stderr=True)
 
-app = typer.Typer()
+
+@click.group()
+def cli():
+    pass
 
 
-@app.command()
-def new_password(clipboard: Annotated[bool, typer.Option(
-        "--clipboard", "-c", help="Copy password to clipboard", is_flag=True)]):
+@cli.command()
+@click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
+def create_password(clipboard: bool):
     """
     Generate a new password
     """
@@ -36,14 +36,50 @@ def new_password(clipboard: Annotated[bool, typer.Option(
     else:
         console.print(f"Password: {password}")
 
-    if ask_yes_no("Save password?"):
-        new_account = create_account(password=password)
+    # if ask_yes_no("Save password?"):
+    #     new_account = create_account(password)
+    #     save_account_to_file("accounts.json", new_account)
+    #     console.print("[green]Account saved![/green]")
+    #     console.print(new_account.get_table())
+
+
+SKIP_STRING = "Press Enter to Skip"
+
+
+@cli.command()
+@click.option("--password", prompt=True, default="Press Enter to for a random Password", show_default=False, help="Password for the account", type=str)
+@click.option("--username", prompt=True, default=SKIP_STRING, show_default=False, help="Username for the account", type=str)
+@click.option("--service", prompt=True, default=SKIP_STRING, show_default=False, help="Service for the account", type=str)
+@click.option("--url", prompt=True, default=SKIP_STRING, show_default=False, help="URL for the account", type=str)
+@click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
+def create_account(clipboard: bool, password: str = None, username: str = None, service: str = None, url: str = None):
+    """
+    Create an account with the given parameters
+    """
+    if password == "Press Enter to for a random Password":
+        password = generate_password()
+
+    if username == SKIP_STRING:
+        username = None
+    if service == SKIP_STRING:
+        service = None
+    if url == SKIP_STRING:
+        url = None
+
+    new_account = Account(password, username, service, url)
+
+    console.print(new_account.get_table(display_password=(not clipboard)))
+
+    if clipboard:
+        pyperclip.copy(password)
+        console.print("[green]Password copied to clipboard![/green]")
+
+    if click.confirm("Save account?"):
         save_account_to_file("accounts.json", new_account)
         console.print("[green]Account saved![/green]")
-        console.print(new_account.get_table())
 
 
-@app.command()
+@cli.command()
 def find_account():
     """
     Find an account
@@ -109,4 +145,4 @@ def find_account():
 
 
 if __name__ == "__main__":
-    app()
+    cli()
