@@ -32,15 +32,9 @@ def create_password(clipboard: bool):
 
     if clipboard:
         pyperclip.copy(password)
-        console.print("[green]Password copied to clipboard![/green]")
+        console.print("[green]Password copied to clipboard:clipboard:![/green]")
     else:
         console.print(f"Password: {password}")
-
-    # if ask_yes_no("Save password?"):
-    #     new_account = create_account(password)
-    #     save_account_to_file("accounts.json", new_account)
-    #     console.print("[green]Account saved![/green]")
-    #     console.print(new_account.get_table())
 
 
 SKIP_STRING = "Press Enter to Skip"
@@ -72,7 +66,7 @@ def create_account(clipboard: bool, password: str = None, username: str = None, 
 
     if clipboard:
         pyperclip.copy(password)
-        console.print("[green]Password copied to clipboard![/green]")
+        console.print("[green]Password copied to clipboard:clipboard:![/green]")
 
     if click.confirm("Save account?"):
         save_account_to_file("accounts.json", new_account)

@@ -1,35 +1,38 @@
 import json
 from typing import Optional
 
-from password_utils import generate_password
-# from prompter import ask_yes_no
 from rich.table import Table
 
 EMPTY_TEXT = "[bright_black]Empty[/bright_black]"
+HIDDEN_TEXT = "[bright_magenta]******[/bright_magenta]"
 
 
 class Account:
-    def __init__(self, password, username, service, url):
-        self.password = password
-        self.username = username
-        self.service = service
-        self.url = url
+    def __init__(self, password: Optional[str], username: Optional[str], service: Optional[str], url: Optional[str]):
+        self.password = None if password == "" else password
+        self.username = None if username == "" else username
+        self.service = None if service == "" else service
+        self.url = None if url == "" else url
 
-    def _check_empty(self, val):
-        if val == None:
+    def _check_empty(self, val: str):
+        if val == None or val == "":
             return EMPTY_TEXT
         return val
 
     def get_table(self, display_password: bool = False):
+        """
+        Return a rich table with the account's information
+        If any field is None or "", it will display EMPTY_TEXT (Takes priority over display_password)
+        If display_password is True, the password will be displayed, otherwise it will disply HIDDEN_TEXT
+        """
         table = Table(title="Account")
         table.add_column("Field")
         table.add_column("Value")
 
         if display_password:
             table.add_row("Password", self._check_empty(self.password))
-        elif self.password != None:
-            table.add_row(
-                "Password", "[bright_magenta]******[/bright_magenta]")
+        elif self.password != None and self.password != "":
+            table.add_row("Password", HIDDEN_TEXT)
         else:
             table.add_row("Password", EMPTY_TEXT)
 
@@ -39,8 +42,16 @@ class Account:
 
         return table
 
+    def __eq__(self, other):
+        isAccount = isinstance(other, self.__class__)
 
-def account_from_json(data):
+        if not isAccount:
+            return False
+
+        return self.__dict__ == other.__dict__
+
+
+def account_from_dict(data: dict) -> Account:
     return Account(data["password"], data["username"], data["service"], data["url"])
 
 
@@ -53,45 +64,11 @@ def load_accounts_from_file(path: str) -> list[Account]:
         with open(path, "r") as file:
             data = json.load(file)
 
-        return list(map(lambda account: account_from_json(account), data))
+        return list(map(lambda account: account_from_dict(account), data))
     except FileNotFoundError:
         with open("accounts.json", "w") as file:
             file.write("[]")
         return []
-
-
-# def create_account(
-#     username: Optional[str] = None,
-#     service: Optional[str] = None,
-#     url: Optional[str] = None,
-#     password: Optional[str] = None,
-# ) -> Account:
-#     """
-#     Create a new account, prompts the user for input if any of the fields are missing
-#     """
-#     if username == None:
-#         if ask_yes_no("Enter username?"):
-#             username = typer.prompt(
-#                 "Enter username", default=None)
-
-#     if service == None:
-#         if ask_yes_no("Enter name of service?"):
-#             service = typer.prompt(
-#                 "Enter name of service", default=None)
-
-#     if url == None:
-#         if ask_yes_no("Enter url?"):
-#             url = typer.prompt(
-#                 "Enter name of url", default=None)
-
-#     if password == None:
-#         if ask_yes_no("Generate password?"):
-#             password = generate_password()
-#         else:
-#             password = typer.prompt(
-#                 "Enter password manually", hide_input=True, confirmation_prompt=True)
-
-#     return Account(password, username, service, url)
 
 
 def save_account_to_file(path: str, account: Account) -> None:
