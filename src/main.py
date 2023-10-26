@@ -6,12 +6,13 @@ from rich.table import Table
 from account import EMPTY_TEXT, Account, load_accounts_from_file, save_account_to_file
 from fuzzyfinder import fuzzyfinder
 from getch import getch
+from typing import Optional
 
 # from prompter import ask_yes_no
 from password_utils import generate_password
 
-BACKSPACE_BYTE = b'\x08'
-FUNCTION_ARROW_BYTE = b'\xe0'
+BACKSPACE_BYTE = b"\x08"
+FUNCTION_ARROW_BYTE = b"\xe0"
 
 console = Console()
 err_console = Console(stderr=True)
@@ -32,7 +33,7 @@ def create_password(clipboard: bool):
 
     if clipboard:
         pyperclip.copy(password)
-        console.print("[green]Password copied to clipboard:clipboard:![/green]")
+        console.print("[green]:clipboard: Password copied to clipboard![/green]")
     else:
         console.print(f"Password: {password}")
 
@@ -41,12 +42,46 @@ SKIP_STRING = "Press Enter to Skip"
 
 
 @cli.command()
-@click.option("--password", prompt=True, default="Press Enter to for a random Password", show_default=False, help="Password for the account", type=str)
-@click.option("--username", prompt=True, default=SKIP_STRING, show_default=False, help="Username for the account", type=str)
-@click.option("--service", prompt=True, default=SKIP_STRING, show_default=False, help="Service for the account", type=str)
-@click.option("--url", prompt=True, default=SKIP_STRING, show_default=False, help="URL for the account", type=str)
+@click.option(
+    "--password",
+    prompt=True,
+    default="Press Enter to for a random Password",
+    show_default=False,
+    help="Password for the account",
+    type=str,
+)
+@click.option(
+    "--username",
+    prompt=True,
+    default=SKIP_STRING,
+    show_default=False,
+    help="Username for the account",
+    type=str,
+)
+@click.option(
+    "--service",
+    prompt=True,
+    default=SKIP_STRING,
+    show_default=False,
+    help="Service for the account",
+    type=str,
+)
+@click.option(
+    "--url",
+    prompt=True,
+    default=SKIP_STRING,
+    show_default=False,
+    help="URL for the account",
+    type=str,
+)
 @click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
-def create_account(clipboard: bool, password: str = None, username: str = None, service: str = None, url: str = None):
+def create_account(
+    clipboard: bool,
+    password: Optional[str] = None,
+    username: Optional[str] = None,
+    service: Optional[str] = None,
+    url: Optional[str] = None,
+):
     """
     Create an account with the given parameters
     """
@@ -66,7 +101,7 @@ def create_account(clipboard: bool, password: str = None, username: str = None, 
 
     if clipboard:
         pyperclip.copy(password)
-        console.print("[green]Password copied to clipboard:clipboard:![/green]")
+        console.print("[green]:clipboard: Password copied to clipboard![/green]")
 
     if click.confirm("Save account?"):
         save_account_to_file("accounts.json", new_account)
@@ -78,7 +113,7 @@ def find_account():
     """
     Find an account
     """
-    accounts = load_accounts_from_file('accounts.json')
+    accounts = load_accounts_from_file("accounts.json")
     usernames = list[str]([])
 
     input = ""
@@ -89,22 +124,23 @@ def find_account():
     panel_table.add_column("URL")
 
     for account in accounts:
-        if (account.username != None):
+        if account.username is not None:
             usernames.append(account.username)
 
-            service = account.service if account.service != None else EMPTY_TEXT
-            url = account.url if account.url != None else EMPTY_TEXT
+            service = account.service if account.service is not None else EMPTY_TEXT
+            url = account.url if account.url is not None else EMPTY_TEXT
             panel_table.add_row(account.username, service, url)
 
     group = Group(
         ":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): _",
-        panel_table
+        panel_table,
     )
 
     with Live(group, refresh_per_second=60) as live:
         next_byte = getch()
 
-        while next_byte != b'\r':
+        exit_chars = [b"\r", b"\x03", b"\x04"]
+        while next_byte not in exit_chars:
             if next_byte == BACKSPACE_BYTE:
                 input = input[:-1]
             elif next_byte == FUNCTION_ARROW_BYTE:
@@ -112,7 +148,9 @@ def find_account():
                 next_byte = getch()
             else:
                 try:
-                    input += next_byte.decode("UTF-8")
+                    if isinstance(next_byte, bytes):
+                        input += next_byte.decode("UTF-8")
+
                 except UnicodeDecodeError:
                     continue
 
@@ -123,16 +161,19 @@ def find_account():
 
             found_usernames = list(fuzzyfinder(input, usernames))
             for account in accounts:
-                if (account.username in found_usernames):
-                    usernames.append(account.username)
-
-                    service = account.service if account.service != None else EMPTY_TEXT
-                    url = account.url if account.url != None else EMPTY_TEXT
+                if account.username in found_usernames:
+                    usernames.append(
+                        account.username if account.username is not None else EMPTY_TEXT
+                    )
+                    service = (
+                        account.service if account.service is not None else EMPTY_TEXT
+                    )
+                    url = account.url if account.url is not None else EMPTY_TEXT
                     panel_table.add_row(account.username, service, url)
 
             group = Group(
                 f":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): {input}_",
-                panel_table
+                panel_table,
             )
             live.update(group)
             next_byte = getch()

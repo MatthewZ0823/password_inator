@@ -1,9 +1,7 @@
 import secrets
 
 
-def generate_password(
-    length: int = 16
-) -> str:
+def generate_password(length: int = 16) -> str:
     """
     Generate a password with the given length (default 16)
     """
