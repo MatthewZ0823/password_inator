@@ -16,6 +16,7 @@ from .account import (
     save_account_to_file,
 )
 from .constants import strings as STRINGS
+from .getch import getch
 
 console = Console()
 err_console = Console(stderr=True)
@@ -109,31 +110,13 @@ def create_account(
 
 
 @cli.command()
-@click.option(
-    "--search-by",
-    help="Account Field to Search By",
-    default="Username",
-    type=click.Choice(["Username", "Service", "URL"], case_sensitive=False),
-)
-def find_account(search_by: str):
+def find_account():
     """
     Find an account
     """
     accounts = load_accounts_from_file("accounts.json")
+    filtered_accounts = find_account_by_field(AccountFields.URL, accounts, "")
     live_input = Live_Input()
-
-    field_mapping = {
-        "Username": AccountFields.USERNAME,
-        "Service": AccountFields.SERVICE,
-        "URL": AccountFields.URL,
-    }
-    field = field_mapping.get(search_by)
-
-    if field is None:
-        err_console.print(f"{STRINGS.ERROR} INVALID FIELD")
-        return
-    else:
-        filtered_accounts = find_account_by_field(field, accounts, "")
 
     panel_table = create_search_table(filtered_accounts)
     group = Group(
@@ -142,10 +125,12 @@ def find_account(search_by: str):
     )
 
     with Live(group, refresh_per_second=60) as live:
-        process_input = not live_input.process_next_input()
-
-        while process_input:
-            filtered_accounts = find_account_by_field(field, accounts, live_input.input)
+        while True:
+            live_input.process_next_input()
+            print("here")
+            filtered_accounts = find_account_by_field(
+                AccountFields.URL, accounts, live_input.input
+            )
             panel_table = create_search_table(filtered_accounts)
 
             group = Group(
@@ -153,8 +138,6 @@ def find_account(search_by: str):
                 panel_table,
             )
             live.update(group)
-
-            process_input = not live_input.process_next_input()
 
 
 if __name__ == "__main__":

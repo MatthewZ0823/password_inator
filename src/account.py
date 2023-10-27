@@ -1,14 +1,26 @@
+from enum import Enum
 import json
 from typing import Optional
-
 from rich.table import Table
 
-EMPTY_TEXT = "[bright_black]Empty[/bright_black]"
-HIDDEN_TEXT = "[bright_magenta]******[/bright_magenta]"
+from .constants import strings as STRINGS
+
+
+class AccountFields(Enum):
+    PASSWORD = 1
+    USERNAME = 2
+    SERVICE = 3
+    URL = 4
 
 
 class Account:
-    def __init__(self, password: Optional[str], username: Optional[str], service: Optional[str], url: Optional[str]):
+    def __init__(
+        self,
+        password: Optional[str],
+        username: Optional[str],
+        service: Optional[str],
+        url: Optional[str],
+    ):
         self.password = None if password == "" else password
         self.username = None if username == "" else username
         self.service = None if service == "" else service
@@ -16,7 +28,7 @@ class Account:
 
     def _check_empty(self, val: str):
         if val == None or val == "":
-            return EMPTY_TEXT
+            return STRINGS.EMPTY_TEXT
         return val
 
     def get_table(self, display_password: bool = False):
@@ -81,6 +93,5 @@ def save_account_to_file(path: str, account: Account) -> None:
 
     with open(path, "w") as file:
         # Convert the accounts to a list of dicts so it's json serializable
-        serialized_accounts = list(
-            map(lambda account: account.__dict__, accounts))
+        serialized_accounts = list(map(lambda account: account.__dict__, accounts))
         json.dump(serialized_accounts, file, indent=4)
