@@ -26,8 +26,8 @@ class Account:
         self.service = None if service == "" else service
         self.url = None if url == "" else url
 
-    def _check_empty(self, val: str):
-        if val == None or val == "":
+    def _check_empty(self, val: Optional[str]):
+        if val is None or val == "":
             return STRINGS.EMPTY_TEXT
         return val
 
@@ -43,10 +43,10 @@ class Account:
 
         if display_password:
             table.add_row("Password", self._check_empty(self.password))
-        elif self.password != None and self.password != "":
-            table.add_row("Password", HIDDEN_TEXT)
+        elif self.password is not None and self.password != "":
+            table.add_row("Password", STRINGS.HIDDEN_TEXT)
         else:
-            table.add_row("Password", EMPTY_TEXT)
+            table.add_row("Password", STRINGS.EMPTY_TEXT)
 
         table.add_row("Username", self._check_empty(self.username))
         table.add_row("Service", self._check_empty(self.service))

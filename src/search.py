@@ -7,6 +7,10 @@ from .constants import strings as STRINGS
 
 
 def find_account_by_field(field: AccountFields, accounts: List[Account], search: str):
+    """
+    Fuzzyfind an account, searching through the list of accounts by field
+    search is the string which the fuzzy matching is done
+    """
     accessor_mapping = {
         AccountFields.USERNAME: lambda account: account.username,
         AccountFields.SERVICE: lambda account: account.service,
@@ -31,6 +35,9 @@ def default_if_empty(s: Optional[str]) -> str:
 
 
 def create_search_table(accounts: List[Account]) -> Table:
+    """
+    Creates a rick table to format the search results (accounts)
+    """
     panel_table = Table()
     panel_table.add_column("Username", style="bold")
     panel_table.add_column("Service")
