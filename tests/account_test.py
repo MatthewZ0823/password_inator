@@ -1,14 +1,16 @@
 import json
-from pprint import pprint
+
 import unittest
 import os
 
-from rich.table import Table
-from rich import print as rprint
+from pprint import pprint  # noqa
+from rich.table import Table  # noqa
+from rich import print as rprint  # noqa
+
 
 # from src.account import Account, HIDDEN_TEXT, EMPTY_TEXT, account_from_dict, load_accounts_from_file
 import src.account as account
-import src.constants.strings as strings
+import src.constants.strings as STRINGS
 
 # from password_utils import generate_password
 
@@ -48,11 +50,14 @@ class TestAccount(unittest.TestCase):
             for idx, row in enumerate(table.columns[1].cells):
                 self.assertEqual(row, test_fields[idx])
 
-            test_fields[0] = strings.EMPTY_TEXT
+            test_fields[0] = STRINGS.EMPTY_TEXT
             table = test_account.get_table(display_password=False)
 
             for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, test_fields[idx])
+                if idx == 0:
+                    self.assertEqual(row, STRINGS.HIDDEN_TEXT)
+                else:
+                    self.assertEqual(row, test_fields[idx])
 
         with self.subTest("Test Account with no Fields"):
             test_fields = [None, None, None, None]
@@ -61,12 +66,12 @@ class TestAccount(unittest.TestCase):
             table = test_account.get_table(display_password=True)
 
             for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, strings.EMPTY_TEXT)
+                self.assertEqual(row, STRINGS.EMPTY_TEXT)
 
             table = test_account.get_table(display_password=False)
 
             for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, strings.EMPTY_TEXT)
+                self.assertEqual(row, STRINGS.EMPTY_TEXT)
 
         with self.subTest("Test Account with Mixed"):
             test_fields = [None, "eaijf_fdajs@Fj$%♪69", "", None]
@@ -75,18 +80,18 @@ class TestAccount(unittest.TestCase):
             table = test_account.get_table(display_password=True)
             rows = list(table.columns[1].cells)
 
-            self.assertEqual(rows[0], strings.EMPTY_TEXT)
+            self.assertEqual(rows[0], STRINGS.EMPTY_TEXT)
             self.assertEqual(rows[1], test_fields[1])
-            self.assertEqual(rows[2], strings.EMPTY_TEXT)
-            self.assertEqual(rows[3], strings.EMPTY_TEXT)
+            self.assertEqual(rows[2], STRINGS.EMPTY_TEXT)
+            self.assertEqual(rows[3], STRINGS.EMPTY_TEXT)
 
             table = test_account.get_table(display_password=False)
             rows = list(table.columns[1].cells)
 
-            self.assertEqual(rows[0], strings.EMPTY_TEXT)
+            self.assertEqual(rows[0], STRINGS.EMPTY_TEXT)
             self.assertEqual(rows[1], test_fields[1])
-            self.assertEqual(rows[2], strings.EMPTY_TEXT)
-            self.assertEqual(rows[3], strings.EMPTY_TEXT)
+            self.assertEqual(rows[2], STRINGS.EMPTY_TEXT)
+            self.assertEqual(rows[3], STRINGS.EMPTY_TEXT)
 
     def test_account_from_dict(self):
         with self.subTest("Test Account with all Fields"):
