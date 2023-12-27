@@ -6,7 +6,9 @@ from rich.table import Table
 from .constants import strings as STRINGS
 
 
-def find_account_by_field(field: AccountFields, accounts: List[Account], search: str):
+def find_account_by_field(
+    field: AccountFields, accounts: List[Account], search: str
+) -> List[Account]:
     """
     Fuzzyfind an account, searching through the list of accounts by field
     search is the string which the fuzzy matching is done
@@ -34,19 +36,32 @@ def default_if_empty(s: Optional[str]) -> str:
     return s if s is not None else STRINGS.EMPTY_TEXT
 
 
-def create_search_table(accounts: List[Account]) -> Table:
+def highlight_text(s: str) -> str:
+    return f"[green]{s}[/green]"
+
+
+def create_search_table(
+    accounts: List[Account], highlighted_row: Optional[int] = None
+) -> Table:
     """
     Creates a rick table to format the search results (accounts)
+    Row of table to be highlighted
     """
     panel_table = Table()
-    panel_table.add_column("Username", style="bold")
+    panel_table.add_column("Username")
     panel_table.add_column("Service")
     panel_table.add_column("URL")
 
-    for account in accounts:
+    for idx, account in enumerate(accounts):
         username = default_if_empty(account.username)
         service = default_if_empty(account.service)
         url = default_if_empty(account.url)
+
+        if idx == highlighted_row:
+            username = highlight_text(username)
+            service = highlight_text(service)
+            url = highlight_text(url)
+
         panel_table.add_row(username, service, url)
 
     return panel_table

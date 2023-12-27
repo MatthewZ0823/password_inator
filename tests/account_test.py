@@ -8,6 +8,8 @@ from rich import print as rprint
 
 # from src.account import Account, HIDDEN_TEXT, EMPTY_TEXT, account_from_dict, load_accounts_from_file
 import src.account as account
+import src.constants.strings as strings
+
 # from password_utils import generate_password
 
 test_accounts = [
@@ -15,20 +17,15 @@ test_accounts = [
         "password": "password",
         "username": "username",
         "service": "service",
-        "url": "url"
+        "url": "url",
     },
-    {
-        "password": None,
-        "username": "",
-        "service": None,
-        "url": None
-    },
+    {"password": None, "username": "", "service": None, "url": None},
     {
         "password": "djsaoijf@#%♪69",
         "username": "I have a very mature sense of humor",
         "service": None,
-        "url": "www.google.com"
-    }
+        "url": "www.google.com",
+    },
 ]
 
 
@@ -51,7 +48,7 @@ class TestAccount(unittest.TestCase):
             for idx, row in enumerate(table.columns[1].cells):
                 self.assertEqual(row, test_fields[idx])
 
-            test_fields[0] = account.HIDDEN_TEXT
+            test_fields[0] = strings.EMPTY_TEXT
             table = test_account.get_table(display_password=False)
 
             for idx, row in enumerate(table.columns[1].cells):
@@ -64,12 +61,12 @@ class TestAccount(unittest.TestCase):
             table = test_account.get_table(display_password=True)
 
             for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, account.EMPTY_TEXT)
+                self.assertEqual(row, strings.EMPTY_TEXT)
 
             table = test_account.get_table(display_password=False)
 
             for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, account.EMPTY_TEXT)
+                self.assertEqual(row, strings.EMPTY_TEXT)
 
         with self.subTest("Test Account with Mixed"):
             test_fields = [None, "eaijf_fdajs@Fj$%♪69", "", None]
@@ -78,18 +75,18 @@ class TestAccount(unittest.TestCase):
             table = test_account.get_table(display_password=True)
             rows = list(table.columns[1].cells)
 
-            self.assertEqual(rows[0], account.EMPTY_TEXT)
+            self.assertEqual(rows[0], strings.EMPTY_TEXT)
             self.assertEqual(rows[1], test_fields[1])
-            self.assertEqual(rows[2], account.EMPTY_TEXT)
-            self.assertEqual(rows[3], account.EMPTY_TEXT)
+            self.assertEqual(rows[2], strings.EMPTY_TEXT)
+            self.assertEqual(rows[3], strings.EMPTY_TEXT)
 
             table = test_account.get_table(display_password=False)
             rows = list(table.columns[1].cells)
 
-            self.assertEqual(rows[0], account.EMPTY_TEXT)
+            self.assertEqual(rows[0], strings.EMPTY_TEXT)
             self.assertEqual(rows[1], test_fields[1])
-            self.assertEqual(rows[2], account.EMPTY_TEXT)
-            self.assertEqual(rows[3], account.EMPTY_TEXT)
+            self.assertEqual(rows[2], strings.EMPTY_TEXT)
+            self.assertEqual(rows[3], strings.EMPTY_TEXT)
 
     def test_account_from_dict(self):
         with self.subTest("Test Account with all Fields"):
@@ -99,10 +96,9 @@ class TestAccount(unittest.TestCase):
                 "password": "password",
                 "username": "username",
                 "service": "service",
-                "url": "url"
+                "url": "url",
             }
-            self.assertEqual(account.account_from_dict(
-                test_dict), test_account)
+            self.assertEqual(account.account_from_dict(test_dict), test_account)
 
         with self.subTest("Test Account with no Fields"):
             test_fields = [None, None, None, None]
@@ -111,10 +107,9 @@ class TestAccount(unittest.TestCase):
                 "password": None,
                 "username": None,
                 "service": None,
-                "url": None
+                "url": None,
             }
-            self.assertEqual(account.account_from_dict(
-                test_dict), test_account)
+            self.assertEqual(account.account_from_dict(test_dict), test_account)
 
         with self.subTest("Test Account with some Fields"):
             test_fields = [None, "eaijf_fdajs@Fj$%♪69", "", None]
@@ -123,17 +118,20 @@ class TestAccount(unittest.TestCase):
                 "password": None,
                 "username": "eaijf_fdajs@Fj$%♪69",
                 "service": "",
-                "url": None
+                "url": None,
             }
-            self.assertEqual(account.account_from_dict(
-                test_dict), test_account)
+            self.assertEqual(account.account_from_dict(test_dict), test_account)
 
     def test_load_accounts_from_file(self):
         expected_accounts = [
             account.Account("password", "username", "service", "url"),
             account.Account(None, "", None, None),
             account.Account(
-                "djsaoijf@#%♪69", "I have a very mature sense of humor", None, "www.google.com")
+                "djsaoijf@#%♪69",
+                "I have a very mature sense of humor",
+                None,
+                "www.google.com",
+            ),
         ]
 
         test_files_path = "tests/test_files"
@@ -142,7 +140,8 @@ class TestAccount(unittest.TestCase):
         create_test_accounts(test_files_path, test_file_name)
 
         loaded_accounts = account.load_accounts_from_file(
-            f"{test_files_path}/{test_file_name}.json")
+            f"{test_files_path}/{test_file_name}.json"
+        )
 
         for loaded, expected in zip(loaded_accounts, expected_accounts):
             self.assertEqual(loaded, expected)
@@ -152,17 +151,19 @@ class TestAccount(unittest.TestCase):
         test_file_name = "test_save_accounts"
 
         create_test_accounts(test_files_path, test_file_name)
-        new_account = account.Account("password123", "John Smith", "example website", "www.example.com")
+        new_account = account.Account(
+            "password123", "John Smith", "example website", "www.example.com"
+        )
 
-        account.save_account_to_file(f"{test_files_path}/{test_file_name}.json", new_account)
+        account.save_account_to_file(
+            f"{test_files_path}/{test_file_name}.json", new_account
+        )
 
         with open(f"{test_files_path}/{test_file_name}.json", "r") as f:
             file_content = json.load(f)
             self.assertEqual(file_content[-1], new_account.__dict__)
 
-        
 
-
-if __name__ == '__main__':
-    print('Running tests...')
+if __name__ == "__main__":
+    print("Running tests...")
     unittest.main()

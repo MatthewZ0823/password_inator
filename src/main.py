@@ -5,10 +5,9 @@ from rich.live import Live
 
 from typing import Optional
 
-# from prompter import ask_yes_no
 from .password_utils import generate_password
 from .search import find_account_by_field, create_search_table
-from .live_input import Live_Input
+from .live_input import Key_Type, Live_Input
 from .account import (
     Account,
     AccountFields,
@@ -45,7 +44,7 @@ def create_password(clipboard: bool):
 @click.option(
     "--password",
     prompt=True,
-    default="Press Enter to for a random Password",
+    default="Press Enter for a random Password",
     show_default=False,
     help="Password for the account",
     type=str,
@@ -119,6 +118,7 @@ def find_account(search_by: str):
     """
     Find an account
     """
+    highlighted_row = 0
     accounts = load_accounts_from_file("accounts.json")
     live_input = Live_Input()
 
@@ -135,18 +135,24 @@ def find_account(search_by: str):
     else:
         filtered_accounts = find_account_by_field(field, accounts, "")
 
-    panel_table = create_search_table(filtered_accounts)
+    panel_table = create_search_table(filtered_accounts, highlighted_row)
     group = Group(
         ":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): _",
         panel_table,
     )
 
     with Live(group, refresh_per_second=60) as live:
-        process_input = not live_input.process_next_input()
+        input_type = live_input.process_next_input()
 
-        while process_input:
+        while input_type != Key_Type.EXIT:
             filtered_accounts = find_account_by_field(field, accounts, live_input.input)
-            panel_table = create_search_table(filtered_accounts)
+
+            if input_type == Key_Type.UP:
+                highlighted_row = min(highlighted_row - 1, len(filtered_accounts) - 1)
+            elif input_type == Key_Type.DOWN:
+                highlighted_row = max(highlighted_row + 1, 0)
+
+            panel_table = create_search_table(filtered_accounts, highlighted_row)
 
             group = Group(
                 f":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): {live_input.input}_",
@@ -154,7 +160,7 @@ def find_account(search_by: str):
             )
             live.update(group)
 
-            process_input = not live_input.process_next_input()
+            input_type = live_input.process_next_input()
 
 
 if __name__ == "__main__":
