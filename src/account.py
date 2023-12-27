@@ -2,6 +2,7 @@ from enum import Enum
 import json
 from typing import Optional
 from rich.table import Table
+import uuid
 
 from .constants import strings as STRINGS
 
@@ -11,20 +12,23 @@ class AccountFields(Enum):
     USERNAME = 2
     SERVICE = 3
     URL = 4
+    ID = 5
 
 
 class Account:
     def __init__(
         self,
-        password: Optional[str],
-        username: Optional[str],
-        service: Optional[str],
-        url: Optional[str],
+        password: Optional[str] = None,
+        username: Optional[str] = None,
+        service: Optional[str] = None,
+        url: Optional[str] = None,
+        id: Optional[str] = None,
     ):
         self.password = None if password == "" else password
         self.username = None if username == "" else username
         self.service = None if service == "" else service
         self.url = None if url == "" else url
+        self.id = uuid.uuid4().hex if id is None else id
 
     def _check_empty(self, val: Optional[str]):
         if val is None or val == "":
@@ -60,11 +64,19 @@ class Account:
         if not isAccount:
             return False
 
+        # TODO: Change to comparing IDs instead
         return self.__dict__ == other.__dict__
 
 
 def account_from_dict(data: dict) -> Account:
-    return Account(data["password"], data["username"], data["service"], data["url"])
+    """
+    Create an account from `data`
+    """
+
+    fields = ["password", "username", "service", "url", "id"]
+    field_values = [data[field] if field in data else None for field in fields]
+
+    return Account(*field_values)
 
 
 def load_accounts_from_file(path: str) -> list[Account]:
