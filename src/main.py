@@ -44,7 +44,7 @@ def create_password(clipboard: bool):
 @click.option(
     "--password",
     prompt=True,
-    default="Press Enter for a random Password",
+    default=STRINGS.RANDOM_PASSWORD_PROMPT,
     show_default=False,
     help="Password for the account",
     type=str,
@@ -84,7 +84,8 @@ def create_account(
     """
     Create an account with the given parameters
     """
-    if password == "Press Enter to for a random Password":
+    if password == STRINGS.RANDOM_PASSWORD_PROMPT:
+        console.print("here")
         password = generate_password()
 
     if username == STRINGS.SKIP_STRING:
@@ -96,7 +97,7 @@ def create_account(
 
     new_account = Account(password, username, service, url)
 
-    console.print(new_account.get_table(display_password=(not clipboard)))
+    console.print(new_account.get_table(display_password=False))
 
     if clipboard:
         pyperclip.copy(password)
