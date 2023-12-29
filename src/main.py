@@ -13,8 +13,10 @@ from .account import (
     AccountFields,
     load_accounts_from_file,
     save_account_to_file,
+    write_accounts_to_file,
 )
 from .constants import strings as STRINGS
+from .constants import paths as PATHS
 
 console = Console()
 err_console = Console(stderr=True)
@@ -85,7 +87,6 @@ def create_account(
     Create an account with the given parameters
     """
     if password == STRINGS.RANDOM_PASSWORD_PROMPT:
-        console.print("here")
         password = generate_password()
 
     if username == STRINGS.SKIP_STRING:
@@ -104,7 +105,7 @@ def create_account(
         console.print("[green]:clipboard: Password copied to clipboard![/green]")
 
     if click.confirm("Save account?"):
-        save_account_to_file("accounts.json", new_account)
+        save_account_to_file(PATHS.ACCOUNT_PATH, new_account)
         console.print("[green]Account saved![/green]")
 
 
@@ -115,12 +116,18 @@ def create_account(
     default="Username",
     type=click.Choice(["Username", "Service", "URL"], case_sensitive=False),
 )
-def find_account(search_by: str):
+@click.option(
+    "--show-ids",
+    help="Display Account IDs in search table",
+    is_flag=True,
+    default=False,
+)
+def find_account(search_by: str, show_ids: bool):
     """
     Find an account
     """
     highlighted_row = 0
-    accounts = load_accounts_from_file("accounts.json")
+    accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
     live_input = Live_Input()
 
     field_mapping = {
@@ -136,9 +143,9 @@ def find_account(search_by: str):
     else:
         filtered_accounts = find_account_by_field(field, accounts, "")
 
-    panel_table = create_search_table(filtered_accounts, highlighted_row)
+    panel_table = create_search_table(filtered_accounts, highlighted_row, show_ids)
     group = Group(
-        ":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): _",
+        ":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to Confirm): _",
         panel_table,
     )
 
@@ -152,16 +159,40 @@ def find_account(search_by: str):
                 highlighted_row = min(highlighted_row - 1, len(filtered_accounts) - 1)
             elif input_type == Key_Type.DOWN:
                 highlighted_row = max(highlighted_row + 1, 0)
+            elif input_type == Key_Type.ENTER:
+                # TODO: Select row and make the account editable
+                break
 
-            panel_table = create_search_table(filtered_accounts, highlighted_row)
+            panel_table = create_search_table(
+                filtered_accounts, highlighted_row, show_ids
+            )
 
             group = Group(
-                f":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to exit): {live_input.input}_",
+                f":magnifying_glass_tilted_right: [yellow]Search[/yellow] (Enter to Confirm): {live_input.input}_",
                 panel_table,
             )
             live.update(group)
 
             input_type = live_input.process_next_input()
+
+
+@cli.command()
+@click.argument("ID")
+def delete_account(id: str):
+    """
+    Delete an account with a specific id
+    """
+    accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
+
+    new_accounts = [account for account in accounts if account.id != id]
+
+    # Check if no account was deleted
+    if len(accounts) == len(new_accounts):
+        console.print(f"[red]No Account Found with id: [/]{id}")
+        return
+
+    write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
+    console.print("[green]🗑️ Account Succesfully Deleted[/green]")
 
 
 if __name__ == "__main__":

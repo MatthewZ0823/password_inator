@@ -41,27 +41,42 @@ def highlight_text(s: str) -> str:
 
 
 def create_search_table(
-    accounts: List[Account], highlighted_row: Optional[int] = None
+    accounts: List[Account],
+    highlighted_row: Optional[int] = None,
+    show_ids: bool = False,
 ) -> Table:
     """
-    Creates a rick table to format the search results (accounts)
-    Row of table to be highlighted
+    Creates a rich table to format the search results
+
+    :param List[Account] accounts: List of accounts to format
+    :param Optional[int] highlighted_row: Row of table to be highlighted
+    :param bool show_ids: Indicates whether to display the IDs. Defaults to False
+    :return: The formatted table
+    :rtype: Table
     """
     panel_table = Table()
     panel_table.add_column("Username")
     panel_table.add_column("Service")
     panel_table.add_column("URL")
 
+    if show_ids:
+        panel_table.add_column("ID", style="bright_black")
+
     for idx, account in enumerate(accounts):
         username = default_if_empty(account.username)
         service = default_if_empty(account.service)
         url = default_if_empty(account.url)
+        id = default_if_empty(account.id)
 
         if idx == highlighted_row:
             username = highlight_text(username)
             service = highlight_text(service)
             url = highlight_text(url)
+            id = highlight_text(account.id)
 
-        panel_table.add_row(username, service, url)
+        if show_ids:
+            panel_table.add_row(username, service, url, id)
+        else:
+            panel_table.add_row(username, service, url)
 
     return panel_table

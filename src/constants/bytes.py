@@ -1,5 +1,6 @@
 BACKSPACE_BYTE = b"\x08"
 FUNCTION_ARROW_BYTE = b"\xe0"
-EXIT_BYTES = [b"\r", b"\x03", b"\x04"]
+EXIT_BYTES = [b"\x03", b"\x04"]
+ENTER_BYTE = b"\r"
 UP_ARROW = b"H"
 DOWN_ARROW = b"P"

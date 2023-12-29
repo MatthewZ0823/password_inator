@@ -4,7 +4,7 @@ from .constants import bytes as BYTES
 
 
 class Key_Type(Enum):
-    EXIT = 0  # Enter, ^C, ^D
+    EXIT = 0  # ^C, ^D
     UP = 1  # Up arrow on the keyboard
     DOWN = 2  # Down arrow on the keyboard
     STANDARD = (
@@ -12,6 +12,7 @@ class Key_Type(Enum):
     )
     SPECIAL = 4  # Some other not before mentioned special character
     UNKNOWN = 5  # Some UnicodeDecodeError or otherwise some other character that can't be interpreted
+    ENTER = 6  # Enter
 
 
 class Live_Input:
@@ -27,6 +28,9 @@ class Live_Input:
 
         if next_byte in BYTES.EXIT_BYTES:
             return Key_Type.EXIT
+
+        if next_byte == BYTES.ENTER_BYTE:
+            return Key_Type.ENTER
 
         if next_byte == BYTES.BACKSPACE_BYTE:
             self.input = self.input[:-1]
