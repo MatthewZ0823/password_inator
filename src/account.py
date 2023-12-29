@@ -79,6 +79,55 @@ class Account:
 
         return table
 
+    def get_value(self, field: str):
+        """
+        Gets the value of a field of the account
+
+        :param str field: name of account field, case insensitive
+        :return: the value at the field
+        :raises ValueError: if field is not a account valid
+        """
+        lower = field.lower()
+        match lower:
+            case "password":
+                return self.password
+            case "username":
+                return self.username
+            case "service":
+                return self.service
+            case "url":
+                return self.url
+            case "id":
+                return self.id
+            case _:
+                raise ValueError
+
+    def set_value(self, field: str, new_value: str):
+        """
+        Sets the value of a field of the account
+
+        :param str field: name of account field, case insensitive
+        :param str new_value: value to set the account field to
+        :return: the value at the field
+        :raises ValueError: if field is not a account valid
+        """
+        lower = field.lower()
+        match lower:
+            case "password":
+                self.password = new_value
+            case "username":
+                self.username = new_value
+            case "service":
+                self.service = new_value
+            case "url":
+                self.url = new_value
+            case "id":
+                self.id = new_value
+            case _:
+                raise ValueError
+
+        return self
+
     def __eq__(self, other):
         isAccount = isinstance(other, self.__class__)
 

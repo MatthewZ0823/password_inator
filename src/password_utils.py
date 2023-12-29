@@ -1,7 +1,7 @@
 import secrets
 
 
-legal_password_characters = "~`!@#$%^&*()_-+={[}]|:;'<,>.?/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+legal_password_characters = "~`!@#$%^&*()_-+={[}]|:;<,>.?/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 
 def generate_password(length: int = 16) -> str:

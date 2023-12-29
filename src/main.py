@@ -195,5 +195,28 @@ def delete_account(id: str):
     console.print("[green]🗑️ Account Succesfully Deleted[/green]")
 
 
+@cli.command()
+@click.argument("ID")
+@click.option(
+    "--field",
+    type=click.Choice(["password", "username", "service", "url"]),
+    prompt=True,
+)
+@click.option("--new-value", type=str, prompt=True)
+def edit_account(id: str, field: str, new_value: str):
+    """
+    Edit an account with a specific id
+    """
+    accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
+
+    new_accounts = [
+        (account if account.id != id else account.set_value(field, new_value))
+        for account in accounts
+    ]
+
+    write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
+    console.print("[green]📝 Account Succesfully Edited[/]")
+
+
 if __name__ == "__main__":
     cli()
