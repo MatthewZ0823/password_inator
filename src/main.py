@@ -127,6 +127,7 @@ def find_account(search_by: str, show_ids: bool):
     Find an account
     """
     highlighted_row = 0
+    selected_account_id = None
     accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
     live_input = Live_Input()
 
@@ -160,7 +161,7 @@ def find_account(search_by: str, show_ids: bool):
             elif input_type == Key_Type.DOWN:
                 highlighted_row = max(highlighted_row + 1, 0)
             elif input_type == Key_Type.ENTER:
-                # TODO: Select row and make the account editable
+                selected_account_id = filtered_accounts[highlighted_row].id
                 break
 
             panel_table = create_search_table(
@@ -175,9 +176,28 @@ def find_account(search_by: str, show_ids: bool):
 
             input_type = live_input.process_next_input()
 
+    if selected_account_id is not None:
+        select_account(selected_account_id)
 
-@cli.command()
-@click.argument("ID")
+
+def select_account(id: str):
+    console.print("\nOptions:")
+    console.print("1. Edit")
+    console.print("2. Delete")
+    console.print("3. Quit")
+
+    choice = input("Enter your choice (1/2/3): ")
+
+    match choice:
+        case "1":
+            edit_account(id)
+        case "2":
+            delete_account(id)
+        case _:
+            console.print("Quitting")
+            return
+
+
 def delete_account(id: str):
     """
     Delete an account with a specific id
@@ -193,6 +213,15 @@ def delete_account(id: str):
 
     write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
     console.print("[green]🗑️ Account Succesfully Deleted[/green]")
+
+
+@cli.command(name="delete-account")
+@click.argument("id")
+def delete_account_command(id: str):
+    """
+    Delete an account with a specific id
+    """
+    delete_account(id)
 
 
 @cli.command()
