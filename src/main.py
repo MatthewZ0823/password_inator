@@ -3,7 +3,7 @@ import pyperclip
 from rich.console import Console, Group
 from rich.live import Live
 
-from typing import Optional
+from typing import Optional, List
 
 from .password_utils import generate_password
 from .search import find_account_by_field, create_search_table
@@ -236,6 +236,19 @@ def delete_account(id: str):
     """
     accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
 
+    deleted_account = find_account_by_id(accounts, id)
+
+    if deleted_account is None:
+        console.print(f"[red]No account found with id: [/]{id}")
+        return
+
+    console.print(deleted_account.get_table())
+
+    confirmation = click.confirm("Are you sure you want to delete the account: ")
+
+    if not confirmation:
+        return
+
     new_accounts = [account for account in accounts if account.id != id]
 
     # Check if no account was deleted
@@ -245,6 +258,14 @@ def delete_account(id: str):
 
     write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
     console.print("[green]🗑️ Account Succesfully Deleted[/green]")
+
+
+def find_account_by_id(accounts: List[Account], id: str):
+    for account in accounts:
+        if account.id == id:
+            return account
+
+    return None
 
 
 @cli.command(name="delete-account")
