@@ -186,14 +186,21 @@ def select_account(id: str):
     console.print("2. Delete")
     console.print("3. Quit")
 
-    choice = input("Enter your choice (1/2/3): ")
+    choice = click.prompt(
+        "Enter your choice", type=click.IntRange(min=0, max=3, clamp=True)
+    )
 
     match choice:
-        case "1":
-            edit_account(id)
-        case "2":
+        case 1:
+            field = click.prompt(
+                "field", type=click.Choice(["password", "username", "service", "url"])
+            )
+            new_value = click.prompt("new-value", type=str)
+
+            edit_account(id, field, new_value)
+        case 2:
             delete_account(id)
-        case _:
+        case 3:
             console.print("Quitting")
             return
 
@@ -224,14 +231,6 @@ def delete_account_command(id: str):
     delete_account(id)
 
 
-@cli.command()
-@click.argument("ID")
-@click.option(
-    "--field",
-    type=click.Choice(["password", "username", "service", "url"]),
-    prompt=True,
-)
-@click.option("--new-value", type=str, prompt=True)
 def edit_account(id: str, field: str, new_value: str):
     """
     Edit an account with a specific id
@@ -245,6 +244,21 @@ def edit_account(id: str, field: str, new_value: str):
 
     write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
     console.print("[green]📝 Account Succesfully Edited[/]")
+
+
+@cli.command(name="edit-account")
+@click.argument("id")
+@click.option(
+    "--field",
+    type=click.Choice(["password", "username", "service", "url"]),
+    prompt=True,
+)
+@click.option("--new-value", type=str, prompt=True)
+def edit_account_command(id: str, field: str, new_value: str):
+    """
+    Edit an account with a specific id
+    """
+    edit_account(id, field, new_value)
 
 
 if __name__ == "__main__":
