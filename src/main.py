@@ -192,12 +192,15 @@ def select_account(id: str):
 
     match choice:
         case 1:
-            field = click.prompt(
-                "field", type=click.Choice(["password", "username", "service", "url"])
-            )
-            new_value = click.prompt("new-value", type=str)
-
-            edit_account(id, field, new_value)
+            editing = True
+            while editing:
+                field = click.prompt(
+                    "field",
+                    type=click.Choice(["password", "username", "service", "url"]),
+                )
+                new_value = click.prompt("new-value", type=str)
+                edit_account(id, field, new_value)
+                editing = click.confirm("Continue Editing?")
         case 2:
             delete_account(id)
         case 3:
