@@ -22,6 +22,21 @@ console = Console()
 err_console = Console(stderr=True)
 
 
+def confirm(value: str):
+    """
+    Asks the user to confirm value.
+
+    :param str value: value to confirm
+    :return: True if the user repeats the value
+    :rtype: bool
+    """
+    if value == click.prompt("Repeat to Confirm", type=str):
+        return True
+    else:
+        console.print("[red]Values do not Match[/]")
+        return False
+
+
 @click.group()
 def cli():
     pass
@@ -44,10 +59,8 @@ def create_password(clipboard: bool):
 
 @cli.command()
 @click.option(
+    # prompting is handled later
     "--password",
-    prompt=True,
-    default=STRINGS.RANDOM_PASSWORD_PROMPT,
-    show_default=False,
     help="Password for the account",
     type=str,
 )
@@ -86,8 +99,13 @@ def create_account(
     """
     Create an account with the given parameters
     """
-    if password == STRINGS.RANDOM_PASSWORD_PROMPT:
-        password = generate_password()
+    if password is None:
+        password = input("Password [Press Enter for a Random Password]: ")
+
+        if password == "":
+            password = generate_password()
+        elif not confirm(password):
+            return
 
     if username == STRINGS.SKIP_STRING:
         username = None
@@ -199,6 +217,10 @@ def select_account(id: str):
                     type=click.Choice(["password", "username", "service", "url"]),
                 )
                 new_value = click.prompt("new-value", type=str)
+
+                if field == "password" and not confirm(new_value):
+                    return
+
                 edit_account(id, field, new_value)
                 editing = click.confirm("Continue Editing?")
         case 2:
@@ -261,6 +283,9 @@ def edit_account_command(id: str, field: str, new_value: str):
     """
     Edit an account with a specific id
     """
+    if field == "password" and not confirm(new_value):
+        return
+
     edit_account(id, field, new_value)
 
 
