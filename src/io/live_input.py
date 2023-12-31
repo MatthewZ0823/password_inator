@@ -1,6 +1,6 @@
 from enum import Enum
 from .getch import getch
-from .constants import bytes as BYTES
+from ..constants import bytes as BYTES
 
 
 class Key_Type(Enum):

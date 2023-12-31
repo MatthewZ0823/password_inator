@@ -3,38 +3,27 @@ import pyperclip
 from rich.console import Console, Group
 from rich.live import Live
 
-from typing import Optional, List
+from typing import Optional
 
-from .password_utils import generate_password
-from .search import find_account_by_field, create_search_table
-from .live_input import Key_Type, Live_Input
-from .account import (
+from .utils.password_utils import generate_password
+from .search import fuzzyfind_account_by_field, create_search_table
+from .io.live_input import Key_Type, Live_Input
+from .io.prompting import confirm
+from .accounts.account import (
     Account,
     AccountFields,
+)
+from .accounts.file_manager import (
     load_accounts_from_file,
     save_account_to_file,
-    write_accounts_to_file,
+    edit_account,
+    delete_account,
 )
 from .constants import strings as STRINGS
 from .constants import paths as PATHS
 
 console = Console()
 err_console = Console(stderr=True)
-
-
-def confirm(value: str):
-    """
-    Asks the user to confirm value.
-
-    :param str value: value to confirm
-    :return: True if the user repeats the value
-    :rtype: bool
-    """
-    if value == click.prompt("Repeat to Confirm", type=str):
-        return True
-    else:
-        console.print("[red]Values do not Match[/]")
-        return False
 
 
 @click.group()
@@ -104,7 +93,7 @@ def create_account(
 
         if password == "":
             password = generate_password()
-        elif not confirm(password):
+        elif not confirm(password, console):
             return
 
     if username == STRINGS.SKIP_STRING:
@@ -160,7 +149,7 @@ def find_account(search_by: str, show_ids: bool):
         err_console.print(f"{STRINGS.ERROR} INVALID FIELD")
         return
     else:
-        filtered_accounts = find_account_by_field(field, accounts, "")
+        filtered_accounts = fuzzyfind_account_by_field(field, accounts, "")
 
     panel_table = create_search_table(filtered_accounts, highlighted_row, show_ids)
     group = Group(
@@ -172,14 +161,17 @@ def find_account(search_by: str, show_ids: bool):
         input_type = live_input.process_next_input()
 
         while input_type != Key_Type.EXIT:
-            filtered_accounts = find_account_by_field(field, accounts, live_input.input)
+            filtered_accounts = fuzzyfind_account_by_field(
+                field, accounts, live_input.input
+            )
 
             if input_type == Key_Type.UP:
                 highlighted_row = min(highlighted_row - 1, len(filtered_accounts) - 1)
             elif input_type == Key_Type.DOWN:
                 highlighted_row = max(highlighted_row + 1, 0)
             elif input_type == Key_Type.ENTER:
-                selected_account_id = filtered_accounts[highlighted_row].id
+                if highlighted_row >= 0 and highlighted_row < len(filtered_accounts):
+                    selected_account_id = filtered_accounts[highlighted_row].id
                 break
 
             panel_table = create_search_table(
@@ -218,54 +210,16 @@ def select_account(id: str):
                 )
                 new_value = click.prompt("new-value", type=str)
 
-                if field == "password" and not confirm(new_value):
+                if field == "password" and not confirm(new_value, console):
                     return
 
-                edit_account(id, field, new_value)
+                edit_account(id, field, new_value, console)
                 editing = click.confirm("Continue Editing?")
         case 2:
-            delete_account(id)
+            delete_account(id, console)
         case 3:
             console.print("Quitting")
             return
-
-
-def delete_account(id: str):
-    """
-    Delete an account with a specific id
-    """
-    accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
-
-    deleted_account = find_account_by_id(accounts, id)
-
-    if deleted_account is None:
-        console.print(f"[red]No account found with id: [/]{id}")
-        return
-
-    console.print(deleted_account.get_table())
-
-    confirmation = click.confirm("Are you sure you want to delete the account: ")
-
-    if not confirmation:
-        return
-
-    new_accounts = [account for account in accounts if account.id != id]
-
-    # Check if no account was deleted
-    if len(accounts) == len(new_accounts):
-        console.print(f"[red]No Account Found with id: [/]{id}")
-        return
-
-    write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
-    console.print("[green]🗑️ Account Succesfully Deleted[/green]")
-
-
-def find_account_by_id(accounts: List[Account], id: str):
-    for account in accounts:
-        if account.id == id:
-            return account
-
-    return None
 
 
 @cli.command(name="delete-account")
@@ -274,22 +228,7 @@ def delete_account_command(id: str):
     """
     Delete an account with a specific id
     """
-    delete_account(id)
-
-
-def edit_account(id: str, field: str, new_value: str):
-    """
-    Edit an account with a specific id
-    """
-    accounts = load_accounts_from_file(PATHS.ACCOUNT_PATH)
-
-    new_accounts = [
-        (account if account.id != id else account.set_value(field, new_value))
-        for account in accounts
-    ]
-
-    write_accounts_to_file(PATHS.ACCOUNT_PATH, new_accounts)
-    console.print("[green]📝 Account Succesfully Edited[/]")
+    delete_account(id, console)
 
 
 @cli.command(name="edit-account")
@@ -304,10 +243,10 @@ def edit_account_command(id: str, field: str, new_value: str):
     """
     Edit an account with a specific id
     """
-    if field == "password" and not confirm(new_value):
+    if field == "password" and not confirm(new_value, console):
         return
 
-    edit_account(id, field, new_value)
+    edit_account(id, field, new_value, console)
 
 
 if __name__ == "__main__":

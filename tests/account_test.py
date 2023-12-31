@@ -9,8 +9,8 @@ from rich import print as rprint  # noqa
 
 
 # from src.account import Account, HIDDEN_TEXT, EMPTY_TEXT, account_from_dict, load_accounts_from_file
-import src.account as account
-import src.constants.strings as STRINGS
+from src.accounts import account, file_manager
+from src.constants import strings as STRINGS
 
 # from password_utils import generate_password
 
@@ -180,7 +180,7 @@ class TestAccount(unittest.TestCase):
 
         create_test_accounts(test_files_path, test_file_name)
 
-        loaded_accounts = account.load_accounts_from_file(
+        loaded_accounts = file_manager.load_accounts_from_file(
             f"{test_files_path}/{test_file_name}.json"
         )
 
@@ -196,7 +196,7 @@ class TestAccount(unittest.TestCase):
             "password123", "John Smith", "example website", "www.example.com"
         )
 
-        account.save_account_to_file(
+        file_manager.save_account_to_file(
             f"{test_files_path}/{test_file_name}.json", new_account
         )
 
@@ -213,7 +213,7 @@ class TestAccount(unittest.TestCase):
             account.account_from_dict(test_account) for test_account in test_accounts
         ]
 
-        account.write_accounts_to_file(path, accounts)
+        file_manager.write_accounts_to_file(path, accounts)
 
         expected = [
             {
@@ -254,13 +254,13 @@ class TestAccount(unittest.TestCase):
 
         path = f"{test_files_path}/{test_file_name}.json"
 
-        account.write_accounts_to_file(path, [new_account])
-        loaded = account.load_accounts_from_file(path)
+        file_manager.write_accounts_to_file(path, [new_account])
+        loaded = file_manager.load_accounts_from_file(path)
 
         self.assertEqual(new_account, loaded[0])
 
-        account.save_account_to_file(path, new_account)
-        loaded = account.load_accounts_from_file(path)
+        file_manager.save_account_to_file(path, new_account)
+        loaded = file_manager.load_accounts_from_file(path)
 
         self.assertEqual(new_account, loaded[-1])
 
