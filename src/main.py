@@ -78,8 +78,17 @@ def create_password(clipboard: bool):
     type=str,
 )
 @click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
+@click.option("-s", "--save", help="Save account", is_flag=True)
+@click.option(
+    "-r",
+    "--random-password",
+    help="Generate a random password for the account",
+    is_flag=True,
+)
 def create_account(
     clipboard: bool,
+    save: bool,
+    random_password: bool,
     password: Optional[str] = None,
     username: Optional[str] = None,
     service: Optional[str] = None,
@@ -88,7 +97,9 @@ def create_account(
     """
     Create an account with the given parameters
     """
-    if password is None:
+    if random_password:
+        password = generate_password()
+    elif password is None:
         password = input("Password [Press Enter for a Random Password]: ")
 
         if password == "":
@@ -111,7 +122,7 @@ def create_account(
         pyperclip.copy(password)
         console.print("[green]:clipboard: Password copied to clipboard![/green]")
 
-    if click.confirm("Save account?"):
+    if save or click.confirm("Save account?"):
         save_account_to_file(PATHS.ACCOUNT_PATH, new_account)
         console.print("[green]Account saved![/green]")
 
