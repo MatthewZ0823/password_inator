@@ -208,7 +208,7 @@ def select_account(id: str):
                     "field",
                     type=click.Choice(["password", "username", "service", "url"]),
                 )
-                new_value = click.prompt("new-value", type=str)
+                new_value = input("new-value: ")
 
                 if field == "password" and not confirm(new_value, console):
                     return
@@ -238,11 +238,15 @@ def delete_account_command(id: str):
     type=click.Choice(["password", "username", "service", "url"]),
     prompt=True,
 )
-@click.option("--new-value", type=str, prompt=True)
-def edit_account_command(id: str, field: str, new_value: str):
+@click.option("--new-value", type=Optional[str], default=None, show_default=False)
+def edit_account_command(id: str, field: str, new_value: Optional[str]):
     """
     Edit an account with a specific id
     """
+    if new_value is None:
+        new_value = input("new-value: ")
+        print(new_value)
+
     if field == "password" and not confirm(new_value, console):
         return
 
