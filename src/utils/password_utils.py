@@ -1,13 +1,14 @@
 import random
 import secrets
 
-
-legal_password_characters = "~`!@#$%^&*()_-+={[}]|:;<,>.?/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 special_characters = "~`!@#$%^&*()_-+={[}]|:;<,>.?/"
 digits = "0123456789"
 lowercase_letters = "abcdefghijklmnopqrstuvwxyz"
 uppercase_letters = lowercase_letters.upper()
+
+legal_password_characters = (
+    special_characters + digits + lowercase_letters + uppercase_letters
+)
 
 
 def generate_password(length: int = 16) -> str:
