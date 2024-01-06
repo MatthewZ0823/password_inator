@@ -16,24 +16,27 @@ from src.constants import strings as STRINGS
 
 test_accounts = [
     {
-        "password": "password",
+        "encrypted_password": "hash",
         "username": "username",
         "service": "service",
         "url": "url",
+        "salt": "2668c9cdd9935ddb7c9426d6f9e65b751c35d8940eb6d9e4f4c11c6220615e80",
         "id": "9a5f74fd89d84d65b281ad6973682319",
     },
     {
-        "password": None,
+        "encrypted_password": None,
         "username": "",
         "service": None,
         "url": None,
+        "salt": "59d28f8b61244753a4f02b6452253cb47d4570200cce479b423ff83db5a561f8",
         "id": "40ee92fe284444d881d2509447420a64",
     },
     {
-        "password": "djsaoijf@#%69",
+        "encrypted_password": "djsaoijf@#%69",
         "username": "I have a very mature sense of humor",
         "service": None,
         "url": "www.google.com",
+        "salt": "31dc84b0f25ebfda29d3f918d120ed76c2c1e650aecc1e059316f1ad69e077e4",
         "id": "8e899c92394f4a80b3c2a91a9095d886",
     },
 ]
@@ -50,16 +53,11 @@ def create_test_accounts(path: str, filename: str):
 class TestAccount(unittest.TestCase):
     def test_get_table(self):
         with self.subTest("Test Account with all Fields"):
-            test_fields = ["password", "username", "service", "url"]
+            test_fields = ["hash", "username", "service", "url", "salt"]
             test_account = account.Account(*test_fields)
 
-            table = test_account.get_table(display_password=True)
-
-            for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, test_fields[idx])
-
             test_fields[0] = STRINGS.EMPTY_TEXT
-            table = test_account.get_table(display_password=False)
+            table = test_account.get_table()
 
             for idx, row in enumerate(table.columns[1].cells):
                 if idx == 0:
@@ -68,15 +66,9 @@ class TestAccount(unittest.TestCase):
                     self.assertEqual(row, test_fields[idx])
 
         with self.subTest("Test Account with no Fields"):
-            test_fields = [None, None, None, None]
-            test_account = account.Account(*test_fields)
+            test_account = account.Account()
 
-            table = test_account.get_table(display_password=True)
-
-            for idx, row in enumerate(table.columns[1].cells):
-                self.assertEqual(row, STRINGS.EMPTY_TEXT)
-
-            table = test_account.get_table(display_password=False)
+            table = test_account.get_table()
 
             for idx, row in enumerate(table.columns[1].cells):
                 self.assertEqual(row, STRINGS.EMPTY_TEXT)
@@ -85,15 +77,7 @@ class TestAccount(unittest.TestCase):
             test_fields = [None, "eaijf_fdajs@Fj$%♪69", "", None]
             test_account = account.Account(*test_fields)
 
-            table = test_account.get_table(display_password=True)
-            rows = list(table.columns[1].cells)
-
-            self.assertEqual(rows[0], STRINGS.EMPTY_TEXT)
-            self.assertEqual(rows[1], test_fields[1])
-            self.assertEqual(rows[2], STRINGS.EMPTY_TEXT)
-            self.assertEqual(rows[3], STRINGS.EMPTY_TEXT)
-
-            table = test_account.get_table(display_password=False)
+            table = test_account.get_table()
             rows = list(table.columns[1].cells)
 
             self.assertEqual(rows[0], STRINGS.EMPTY_TEXT)
@@ -103,26 +87,19 @@ class TestAccount(unittest.TestCase):
 
     def test_account_from_dict(self):
         with self.subTest("Test Account with all Fields"):
-            test_fields = [
-                "password",
+            test_account = account.Account(
+                "hash",
                 "username",
                 "service",
                 "url",
-                "035d0b2a3cc644d4914e31915eb87673",
-            ]
-            test_account = account.Account(*test_fields)
-            test_dict = {
-                "password": "password",
-                "username": "username",
-                "service": "service",
-                "url": "url",
-                "id": "035d0b2a3cc644d4914e31915eb87673",
-            }
+                "2668c9cdd9935ddb7c9426d6f9e65b751c35d8940eb6d9e4f4c11c6220615e80",
+                "9a5f74fd89d84d65b281ad6973682319",
+            )
+            test_dict = test_accounts[0]
             self.assertEqual(account.account_from_dict(test_dict), test_account)
 
         with self.subTest("Test Account with no Fields"):
-            test_fields = [None, None, None, None]
-            test_account = account.Account(*test_fields)
+            test_account = account.Account()
             test_dict = {
                 "password": None,
                 "username": None,
@@ -132,15 +109,17 @@ class TestAccount(unittest.TestCase):
 
             account_from_d = account.account_from_dict(test_dict)
 
-            self.assertEqual(account_from_d.password, test_account.password)
+            self.assertEqual(
+                account_from_d.encrypted_password, test_account.encrypted_password
+            )
             self.assertEqual(account_from_d.username, test_account.username)
             self.assertEqual(account_from_d.service, test_account.service)
             self.assertEqual(account_from_d.url, test_account.url)
             self.assertTrue(account.is_valid_uuid(test_account.id))
+            self.assertTrue(len(account_from_d.salt) == 64)
 
         with self.subTest("Test Account with some Fields"):
-            test_fields = [None, "eaijf_fdajs@Fj$%♪69", "", None]
-            test_account = account.Account(*test_fields)
+            test_account = account.Account(None, "eaijf_fdajs@Fj$%♪69", "", None)
             test_dict = {
                 "password": None,
                 "username": "eaijf_fdajs@Fj$%♪69",
@@ -150,27 +129,39 @@ class TestAccount(unittest.TestCase):
 
             account_from_d = account.account_from_dict(test_dict)
 
-            self.assertEqual(account_from_d.password, test_account.password)
+            self.assertEqual(
+                account_from_d.encrypted_password, test_account.encrypted_password
+            )
             self.assertEqual(account_from_d.username, test_account.username)
             self.assertEqual(account_from_d.service, test_account.service)
             self.assertEqual(account_from_d.url, test_account.url)
             self.assertTrue(account.is_valid_uuid(test_account.id))
+            self.assertTrue(len(account_from_d.salt) == 64)
 
     def test_load_accounts_from_file(self):
         expected_accounts = [
             account.Account(
-                "password",
+                "hash",
                 "username",
                 "service",
                 "url",
+                "2668c9cdd9935ddb7c9426d6f9e65b751c35d8940eb6d9e4f4c11c6220615e80",
                 "9a5f74fd89d84d65b281ad6973682319",
             ),
-            account.Account(None, "", None, None, "40ee92fe284444d881d2509447420a64"),
+            account.Account(
+                None,
+                None,
+                None,
+                None,
+                "59d28f8b61244753a4f02b6452253cb47d4570200cce479b423ff83db5a561f8",
+                "40ee92fe284444d881d2509447420a64",
+            ),
             account.Account(
                 "djsaoijf@#%69",
                 "I have a very mature sense of humor",
                 None,
                 "www.google.com",
+                "31dc84b0f25ebfda29d3f918d120ed76c2c1e650aecc1e059316f1ad69e077e4",
                 "8e899c92394f4a80b3c2a91a9095d886",
             ),
         ]
@@ -215,29 +206,9 @@ class TestAccount(unittest.TestCase):
 
         file_manager.write_accounts_to_file(path, accounts)
 
-        expected = [
-            {
-                "password": "password",
-                "username": "username",
-                "service": "service",
-                "url": "url",
-                "id": "9a5f74fd89d84d65b281ad6973682319",
-            },
-            {
-                "password": None,
-                "username": None,
-                "service": None,
-                "url": None,
-                "id": "40ee92fe284444d881d2509447420a64",
-            },
-            {
-                "password": "djsaoijf@#%69",
-                "username": "I have a very mature sense of humor",
-                "service": None,
-                "url": "www.google.com",
-                "id": "8e899c92394f4a80b3c2a91a9095d886",
-            },
-        ]
+        expected = test_accounts.copy()
+        # The empty string should've been replaced with None
+        expected[1]["username"] = None
 
         with open(path, "r") as f:
             file_content = json.load(f)

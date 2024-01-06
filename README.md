@@ -12,4 +12,4 @@ cd into the root directory and run `python3 -m src.main` to get the help menu fr
 
 ## Run the Tests
 
-
+tests are currently not working :P

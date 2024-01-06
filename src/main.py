@@ -1,10 +1,12 @@
 import click
+import os
 import pyperclip
 from rich.console import Console, Group
 from rich.live import Live
 
 from typing import Optional
 
+from .encryption.master_password import save_master_password
 from .utils.password_utils import generate_password
 from .search import fuzzyfind_account_by_field, create_search_table
 from .io.live_input import Key_Type, Live_Input
@@ -14,9 +16,10 @@ from .accounts.account import (
     AccountFields,
 )
 from .accounts.file_manager import (
+    get_password_from_account_with_feedback,
     load_accounts_from_file,
     save_account_to_file,
-    edit_account,
+    edit_account_with_feedback,
     delete_account,
 )
 from .constants import strings as STRINGS
@@ -32,25 +35,16 @@ def cli():
 
 
 @cli.command()
-@click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
-def create_password(clipboard: bool):
-    """
-    Generate a new password
-    """
-    password = generate_password()
-
-    if clipboard:
-        pyperclip.copy(password)
-        console.print("[green]:clipboard: Password copied to clipboard![/green]")
-    else:
-        console.print(f"Password: {password}")
-
-
-@cli.command()
 @click.option(
     # prompting is handled later
     "--password",
     help="Password for the account",
+    type=str,
+)
+@click.option(
+    # prompting is handled later
+    "--master-password",
+    help="Master password used to encrypt passwords",
     type=str,
 )
 @click.option(
@@ -90,6 +84,7 @@ def create_account(
     save: bool,
     random_password: bool,
     password: Optional[str] = None,
+    master_password: Optional[str] = None,
     username: Optional[str] = None,
     service: Optional[str] = None,
     url: Optional[str] = None,
@@ -107,6 +102,9 @@ def create_account(
         elif not confirm(password, console):
             return
 
+    if master_password is None:
+        master_password = input("Master Password: ")
+
     if username == STRINGS.SKIP_STRING:
         username = None
     if service == STRINGS.SKIP_STRING:
@@ -114,13 +112,22 @@ def create_account(
     if url == STRINGS.SKIP_STRING:
         url = None
 
-    new_account = Account(password, username, service, url)
+    try:
+        new_account = Account.from_unencrypted(
+            password, master_password, username, service, url
+        )
+    except ValueError:
+        err_console.print(STRINGS.MASTER_PASSWORD_ERROR)
+        return
+    except FileNotFoundError:
+        err_console.print(STRINGS.MASTER_PASSWORD_NOT_FOUND_ERROR)
+        return
 
-    console.print(new_account.get_table(display_password=False))
+    console.print(new_account.get_table())
 
     if clipboard:
         pyperclip.copy(password)
-        console.print("[green]:clipboard: Password copied to clipboard![/green]")
+        console.print(STRINGS.COPIED_TO_CLIPBOARD)
 
     if save or click.confirm("Save account?"):
         save_account_to_file(PATHS.ACCOUNT_PATH, new_account)
@@ -205,7 +212,8 @@ def select_account(id: str):
     console.print("\nOptions:")
     console.print("1. Edit")
     console.print("2. Delete")
-    console.print("3. Quit")
+    console.print("3. Get Password")
+    console.print("4. Quit")
 
     choice = click.prompt(
         "Enter your choice", type=click.IntRange(min=0, max=3, clamp=True)
@@ -221,14 +229,18 @@ def select_account(id: str):
                 )
                 new_value = input("new-value: ")
 
-                if field == "password" and not confirm(new_value, console):
-                    return
-
-                edit_account(id, field, new_value, console)
+                edit_account_with_feedback(id, field, new_value, console, err_console)
                 editing = click.confirm("Continue Editing?")
         case 2:
             delete_account(id, console)
         case 3:
+            master_password = input("Master Password: ")
+            clip = click.confirm("Copy to clipboard?")
+
+            get_password_from_account_with_feedback(
+                id, master_password, console, err_console, clip
+            )
+        case 4:
             console.print("Quitting")
             return
 
@@ -256,12 +268,56 @@ def edit_account_command(id: str, field: str, new_value: Optional[str]):
     """
     if new_value is None:
         new_value = input("new-value: ")
-        print(new_value)
 
-    if field == "password" and not confirm(new_value, console):
+    edit_account_with_feedback(id, field, new_value, console, err_console)
+
+
+@cli.command(name="get-account-password")
+@click.argument("id")
+@click.option(
+    "-p",
+    "--master-password",
+    type=str,
+    prompt=True,
+    help="Master password used to encrypt all passwords",
+)
+@click.option("-c", "--clipboard", help="Copy password to clipboard", is_flag=True)
+def get_account_password_command(id: str, master_password: str, clipboard: bool):
+    """
+    Get the password of an account with the specified id
+    """
+    get_password_from_account_with_feedback(
+        id, master_password, console, err_console, clipboard
+    )
+
+
+@cli.command(name="create-master-password")
+@click.argument("master_password")
+@click.option(
+    "--force", help="Force override the current master password", is_flag=True
+)
+def create_master_password_command(master_password: str, force: bool):
+    """
+    Create and save the master password to encrypt all passwords
+    """
+    # Check if overriding existing master password
+    if os.path.isfile(PATHS.MASTER_PATH) and not force:
+        err_console.print("[red]Master Password already exists![/]")
+        err_console.print(
+            "[red]Running this command will override the existing master password. Previous passwords encrypted with the already existing master password will be unrecoverable[/]"
+        )
+        err_console.print(
+            "[red]If you would like to override the master password use the --force flag[/]"
+        )
         return
 
-    edit_account(id, field, new_value, console)
+    confirmation = confirm(master_password, console)
+
+    if not confirmation:
+        return
+
+    save_master_password(master_password)
+    console.print("[green]🔐 Master Password Saved![/]")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import random
 import secrets
+from Cryptodome.Protocol.KDF import scrypt
 
 special_characters = "~`!@#$%^&*()_-+={[}]|:;<,>.?/"
 digits = "0123456789"
@@ -35,3 +36,15 @@ def generate_password(length: int = 16) -> str:
     password = "".join(random.sample(password, length))
 
     return password
+
+
+def hash_password(password: str, salt: str) -> str:
+    """
+    Hashes a password with a salt using scrypt
+
+    :param str password: password to encrypt
+    :param str salt: salt to apply to password
+    :return: hex representation of the hash
+    :rtype: str
+    """
+    return scrypt(password, salt, 32, N=2**14, r=8, p=1).hex()  # type: ignore

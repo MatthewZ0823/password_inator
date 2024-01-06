@@ -1,18 +1,7 @@
-from Cryptodome.Protocol.KDF import scrypt
-from ..constants import paths as PATHS
+from ..constants.paths import MASTER_PATH
+from ..constants.numbers import KEY_SIZE
 from ..utils.aes_utils import create_salt
-
-
-def _hash_password(password: str, salt: str) -> str:
-    """
-    Hashes a password with a salt using scrypt
-
-    :param str password: password to encrypt
-    :param str salt: salt to apply to password
-    :return: hex representation of the hash
-    :rtype: str
-    """
-    return scrypt(password, salt, 32, N=2**14, r=8, p=1).hex()  # type: ignore
+from ..utils.password_utils import hash_password
 
 
 def save_master_password(password: str):
@@ -22,9 +11,9 @@ def save_master_password(password: str):
 
     :param str password: password to save
     """
-    with open(PATHS.MASTER_PATH, "w") as f:
-        salt = create_salt(32)
-        hash = _hash_password(password, salt)
+    with open(MASTER_PATH, "w") as f:
+        salt = create_salt(KEY_SIZE)
+        hash = hash_password(password, salt)
 
         f.write("Salt: \n")
         f.write(salt)
@@ -42,15 +31,12 @@ def verify_master_password(password: str) -> bool:
     :rtype: bool
     :raises FileNotFoundError: if master.txt file is not found
     """
-    with open(PATHS.MASTER_PATH, "r") as f:
+    with open(MASTER_PATH, "r") as f:
         lines = f.readlines()
 
         salt = lines[1].strip()
         hash = lines[3].strip()
 
-        new_hash = scrypt(password, salt, 32, N=2**14, r=8, p=1)
+        new_hash = hash_password(password, salt)
 
-        if not isinstance(new_hash, bytes):
-            return False
-
-        return hash == new_hash.hex()
+        return hash == new_hash
